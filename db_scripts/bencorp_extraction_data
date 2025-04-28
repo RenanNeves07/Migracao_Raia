@@ -1,0 +1,33 @@
+#@ RETORNA UM XLSX COM AS VIDAS ATIVAS DE UM CONJUNTO DE EMPRESAS (RAIA DROGASIL)
+import requests
+import pandas as pd
+import io
+
+url = 'https://ws1.soc.com.br/WebSoc/exportadados?parametro='
+
+empresas = ['1379598'] #RAIA DROGASIL
+empresa = 'RAIA_DROGASIL'
+dataframes=[]
+
+for item in empresas:
+    body = f'''{{'empresa':'{item}',
+                    'codigo':'160070',
+                    'chave':'b1c438b2f03e4c23fac0',
+                    'tipoSaida':'json',
+                    'ativo':'sim',
+                    'inativo':'sim',
+                    'afastado':'sim',
+                    'pendente':'sim',
+                    'ferias':'sim'}}'''
+    response = requests.post(f'{url}{body}')
+    if response.status_code == 200:
+        try:
+            data = io.StringIO(response.text)
+            df = pd.read_json(data)
+            dataframes.append(df)
+        except ValueError as e:
+            print(f'erro {e}')
+    else:
+        print('Erro Chamada')
+final_df = pd.concat(dataframes, ignore_index=True)
+final_df.to_excel(f'vidas_{empresa}.xlsx', index=False)

@@ -1,0 +1,39 @@
+#@ EXTRAÇÃO SOCGED PORTO SEGURO - ASOS E FICHAS - PORTO SEGURO
+import requests
+import pandas as pd
+import io
+
+url = 'https://ws1.soc.com.br/WebSoc/exportadados?parametro='
+
+ano = ['00','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24'] #ELOPAR
+tipo_ged = ['1029','2','1064']
+empresa = 'RAIA_DROGASIL'
+dataframes=[]
+for tipo in tipo_ged:
+    for final in ano:
+        body = f'''{{'empresa':'2618',
+                    'codigo':'3621',
+                    'chave':'c6447300d99fdbf4f3f7',
+                    'tipoSaida':'json',
+                    'tipoBusca':'0',
+                    'sequencialFicha':'',
+                    'cpfFuncionario':'',
+                    'filtraPorTipoSocged':'1',
+                    'codigoTipoSocged':'{tipo}',
+                    'dataInicio':'',
+                    'dataFim':'',
+                    'dataEmissaoInicio':'01/01/20{final}',
+                    'dataEmissaoFim':'31/12/20{final}'}}'''
+        response = requests.post(f'{url}{body}')
+        if response.status_code == 200:
+            try:
+                data = io.StringIO(response.text)
+                df = pd.read_json(data)
+                dataframes.append(df)
+            except ValueError as e:
+                print(f'erro {e}')
+        else:
+            print('Erro Chamada')
+
+final_df = pd.concat(dataframes, ignore_index=True)
+final_df.to_json('raia_GED.json', orient='records')
